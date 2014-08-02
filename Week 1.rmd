@@ -1,0 +1,700 @@
+---
+output: html_document
+---
+```{r}
+rm(list=ls())
+setwd("C:/Nuova Cartella/R Programming")
+```
+
+*Disclaimer*: The following material is mainly the transcription into the R shell, with comments, of the contents of the Coursera's course "*R Programming*" offered by *R. D. Peng* and others from the *Johns Hopkins Bloomerg School of Public Health*. The contents is organized as a tutorial for future reference. I'm currently **unaware** of any copyright issues. The rest are some digressions of mine on the previous topics.
+
+
+#JHBSH: R Programming 1 - Week 1
+
+  
+### Basic types
+
+I R there are 5 basic or "atomic" types (classes) of objects:
+
+* character
+* numeric (real numbers)
+* integer (integer numbers)
+* complex
+* logical (i.e.: TRUE, FALSE)
+
+### Vectors
+The most basic **object** in R is the *vecto*r: an indexed collection of objects of the **same** type (class).
+To build an empty vecotor use the vector() function:
+```{r}
+v1 <- vector()
+```
+By default this creates a vector of type *logical* and, of course, *empty*:
+```{r}
+v1
+class(v1)
+```
+You can specify the class of objects the vector will contain:
+```{r}
+v2 <- vector(mode="numeric", length=5)
+v2
+class(v2)
+```
+On creation, the vector is filled with the "default" value for the chosen type:
+```{r}
+v3 <- vector(mode="complex", length=5)
+v3
+class(v3)
+```
+
+```{r}
+v4 <- vector(mode="integer", length=5)
+v4
+class(v4)
+```
+
+What's the difference between v1 and v4? They both contain an array of 0s... The difference is that v4 contains 0**L** objects, that is an integer 0. By default, when you write 0, it is intended to be a "numeric" 0, i.e. a "real" number (between quotes because inside a computer there're no such things as a real numbers). As a matter of fact, see this:
+```{r}
+class(2)
+
+class(2L)
+
+```
+
+### NA, NaN, Inf
+Other special cases of numbers (generally speaking) are:
+
+* NA is used as a placeholder of a missing value. NA is a typed value, i.e. we can have integer NA, character NA, logical NA, ... and so on. That is, we can have missing numeric values, missing character values, ...
+You can test if a value is NA using the is.na() function:
+```{r}
+a <- NA
+a
+
+class(a)
+is.na(a)
+
+b <- NA
+b <- as.integer(b)
+
+class(b)
+is.na(b)
+```
+
+Note that NaN is a NA, but not viceversa:
+```{r}
+v <- c(1, 2, NA, 3)
+v
+is.na(v)
+is.nan(v)
+
+v <- c(1, NA, NaN, 2)
+is.na(v)
+is.nan(v)
+```
+
+* NaN, i.e. "Not a Number": denotes that the result of an operation does not exist, such as in these, well known, writings (I cannot actually call them "computations""):
+```{r}
+0/0
+
+(-pi)^pi
+
+log(-1)
+
+```
+By the way the reason 0/0 is not a number is as follows. a/b is the number that multiplied by b gives a (6/3 = 2 because 2*3 is 6). What is the number that mutiplied by 0 gives 0? Well, all numbers have got that property ("Zero product property")! So the "result" of 0/0 is undetermined, because ALL numbers are such. 
+
+* the Inf symbol: represents "Infinity".
+```{r}
+3/0
+
+-2/0
+```
+Here again, it could be worthwhile to specify the meaning of those symbols.
+Why the hell 3/0 gets $\infty$? Well this "3/0" symbol has to be **inteded** as: 
+$\lim_{x \rightarrow \infty} \frac{3}{x}$, tat is, of course, $\infty$. So those are to be intended in the analytics way.
+This is different from the *arithmetic* point of view, where 3/0 is **not a number**. Why? Because 3/0 should be a number such that multiplying it by 0, that would result in 3. And, again by the "Zero product property", there is no such number. 
+
+The Inf symbol has the properties of ininity:
+```{r}
+1/Inf == 0
+
+1/(-Inf) == 0
+```
+```{r}
++Inf + (+Inf)
+
+```
+An moreover:
+```{r}
+-2/0 == Inf
+-2/0 == -Inf
+```
+
+It may be interesting to note that "NaN" and "Inf" symbols are coherent between each other:
+```{r}
+-Inf + (+Inf)
+```
+is.nan() tests if the argument is NaN.
+
+Another way to create vectors (and, as we'll see, lists) is to use the c() function. "c" stands for "combine", because its purpose is to combine values into a vector (or list):
+```{r}
+v5 <- c(1, 2, 3)
+v5
+class(v5)
+class(v5[1])
+
+v6 <- c(1L, 2L, 3L)
+v6
+class(v6)
+class(v6[1])
+
+```
+
+See this:
+```{r}
+v7 <- c(1, 2L, 3L)
+v7
+class(v7)
+class(v7[1])
+class(v7[2])
+class(v7[3])
+```
+All elements of the vector are "numeric" (i.e. real), but we asked the 3rd element to be "integer". Unfortunately, since a vector elements can be of only one type (class), we cannot mix "integer"s and "numeric"s into the same vector. So ready-to-be elements of the vector get converted to the type that can hold both (in this case) "integer"s and "numeric"s, i.e. "integer"s. This process is called **coercion** and since it gets done by R, it is more precisely named *implicit* coercion.
+
+Have a look at this:
+```{r}
+v8 <- c("a", 2L, 3)
+v8
+class(v8)
+class(v8[1])
+class(v8[2])
+class(v8[3])
+```
+Since "a" cannot be coerced into any meaningful "numeric" ("numeric" is chosen since "integer"s can be smoothly converted into "numeric"s, and it's the most general type between "numeric" and "integer"), the "numeric" and the "integer" are both coerced into "character". This is kind of searching the *least common denominator* of the types involved in creating the vector. Moreover, keep in mind that coercion, if successful, takes place *quietly*, i.e. no error will be reported by R anyhow.
+
+What would happen to something like: c("1", 2L, 3)? Clever coercing to "numeric"s?
+```{r}
+v9 <- c("1", 2L, 3)
+v9
+class(v9)
+class(v9[1])
+class(v9[2])
+class(v9[3])
+```
+Nope.
+The hierarchy of coercion looks like this: **NULL < raw < logical < integer < numeric < complex < character < list < expression**. From this you can see that when there's a character involved, all other types are converted to character.
+
+Coercions can be **explicit**, i.e. requested by the R program:
+```{r}
+v10 <- c("1", "2", "3")
+v10
+class(v10)
+as.numeric(v10)
+v10
+class(v10)
+
+v10 <- c(0, 1.5, 2, 3, pi, 4)
+v10
+class(v10)
+
+v11 <- as.integer(v10)
+v11
+class(v11)
+
+v12 <- as.logical(v10)
+v12
+class(v12)
+
+v13 <- as.character(v10)
+v13
+class(v13)
+
+v14 = c(0, 4)
+v14
+v15 <- as.logical(v14)
+v15
+v16 <- as.integer(v15)
+v16
+v17 <- as.numeric(v15)
+v17
+```
+Apart from the obvious conversions, i.e. 1L -> 1 (numeric) -> 1L, 1 -> "1", etc. we sse from the last example that:
+
+* **0 -> FALSE -> 0**; and:
+* **(any non zero) -> TRUE -> 1**.
+
+As we can imagine, explicit coercion can be *non-sense*:
+```{r}
+v18 <- c("a", "b", "c")
+v19 <- as.numeric(v18)
+v19
+```
+
+As an aside, you should note that in R a *"single" variable* is just a vector of *length 1*:
+```{r}
+a <- 2
+b <- c(2)
+
+a
+b
+
+class(a)
+class(b)
+
+str(a)
+str(b)
+
+length(a)
+length(b)
+```
+
+Mm... Kind of suspicious! Let's throw the bomb...
+```{r}
+a == b
+```
+This conferms what I've said in the forst rows: vectors actually are the **most basic type** of vars in R. Even simple vars are vectors (of length 1).
+
+### Matrices
+In R, even matrices are vectors. This means there's no separate object type for matrices. They are simply vectors "enhanced" with a new property: **dim** (dimensions). So a "matrix" is a vector with dimensions.
+```{r}
+m1 <- matrix(nrow=2, ncol=3)
+m1
+class(m1)
+str(m1)
+attributes(m1)
+dim(m1) # This is a 2-elements vector!
+class(m1[1,1])
+```
+As for vectors, default type of matrices' elements is "logical". And by the way, vector have NULL dimensions:
+```{r}
+v20 <- c(1, 2, 3)
+v20
+dim(v20)
+```
+You can specificy a vector of elements to be stored in matrix form. Elements are stored into the matrix column-wise:
+```{r}
+class(1:6)
+
+m2 <-matrix(1:6, nrow=2, ncol=3) # 1:6 is a vector
+m2
+class(m2)
+str(m2)
+attributes(m2)
+```
+You can force matrix row-wise building:
+```{r}
+m3 <- matrix(1:6, nrow=2, ncol=3, byrow=TRUE) # 1:6 is a vector
+m3
+```
+And if you do not provide enough data, R will multiply them for you (but always using your suggestions)!:
+```{r}
+m4 <- matrix(1:2, nrow=2, ncol=3, byrow=TRUE) # 1:6 is a vector
+m4
+```
+
+As a further confirmation that matrices are enhanced vectors, we can create a matrix straight form a vector, simply telling it it has *dimensions*:
+```{r}
+v21 <- 1:20
+v21
+
+# Here's the magic:
+dim(v21) <- c(2, 10)
+v21
+```
+Of course, coerced dimensions have to match vector length:
+```{r}
+v22 <- 1:20
+v22
+length(v22)
+
+# Invalid: 3 by 7 is not 20!
+#dim(v22) <- c(3, 7)
+```
+Another way to build a matrix from vectors is to combine them into columns or rows of the newly created matrix:
+```{r}
+v23 <- 1:3
+v24 <- 10:12
+
+m5 <- cbind(v23, v24)
+m5
+
+m6 <- rbind(v23, v24)
+m6
+```
+
+### Lists
+A *list* is a vector that can contain objects of *different* types
+
+```{r}
+l1 <- list(1, "a", TRUE, 1+4i, 1:3)
+l1
+
+class(l1)
+str(l1)
+
+l1[1]        # This is a list
+class(l1[1])
+
+l1[[1]]      # This is vector of length 1
+class(l1[[1]])
+```
+
+### Factors
+Factors are used to represent *categorical* data (male, female; sick, not sick; Democrat, Republican, Independent;  ...), can be ordered or unordered. Factors are created by the factor() function:
+
+```{r}
+f1 <- factor(c("yes", "no", "yes", "yes", "no"))
+f1
+
+class(f1)
+str(f1)
+attributes(f1)
+
+levels(f1) # By default, factor() sorts levels alphabetically
+table(f1)
+```
+Factors get a new attribute levels (f1$levels). You can remove the fact of f1 being a factor and revert it to a vector:
+```{r}
+unclass(f1)
+```
+Order of levels can be imposed to factor this way:
+```{r}
+f2 <- factor(c("yes", "no", "yes", "yes", "no"), levels=c("yes", "no"))
+f2
+
+class(f2)
+str(f2)
+attributes(f2)
+
+levels(f2)
+table(f2)
+
+```
+This is important when you want to set which of the levels is the *baseline* level. Baseline level is used in linear regression to interpret the coefficients of the regression line (plane, iperplane). If you do not use the level argument of the factor() function, level are sorted alphabetically.
+
+### Data Frames
+Data frames are objects that can store tabular objects. It's a list of objects (columns) that each have the same length. Columns can have different types. Roes can have *names* stored in the row.names attribute of the data frame.
+Data frames can be built using the data.frame() function:
+Order of levels can be imposed to factor this way:
+```{r}
+df1 <- data.frame(foo=1:4, bar=c(T, T, F, F))
+df1
+class(df1)
+str(df1)
+attributes(df1)
+```
+Coercion take place here as well, since every column can hold only objects of one type:
+```{r}
+df2 <- data.frame(foo=1:4, bar=c(T, T, F, 1))
+df2
+class(df2)
+str(df2)
+```
+You can query the dimensione of the data frame:
+```{r}
+dim(df1)
+nrow(df1)
+ncol(df1)
+```
+You can query the names of columns and rows:
+```{r}
+names(df1)
+row.names(df1)
+```
+Note that rows get names "1", "2", ...
+
+Names are an attribute of all R objects, not only data frames. Let's see this for vectors:
+```{r}
+v <- 1:3
+names(v)
+names(v) <- c("foo", "bar", "norf")
+names(v)
+```
+And this makes v much more readable:
+```{r}
+v
+```
+Names can be superimposed to lists and matrices as well
+```{r}
+l <- list(a=1, b=2, c=3)
+l
+
+m <- matrix(ncol=3, nrow=2, 1:6)
+m
+dimnames(m) <- list(c("r1", "r2"), c("c1", "c2", "c3"))
+m
+```
+### Subsetting
+*Subsetting* is the art of extracting selected, intended elements from an R data structure. There are, among others, 3 main ways to do that:
+
+* [ return an object that is of the same class of the object it is applied to, i.e. apply it to a vector, you'll get back a vector.
+
+* [[ apply it to a *list* or a *data frame* and it returns an object that is not necessarely of the same type of the original object.
+
+* $ used to extract objects from lists or data frmaes that have a *name*
+
+The difference between [[]] and $ is that [[]] can be used with **computed** indices whereas $ can only be used with names.
+
+Let's see how they work:
+Names can be superimposed to lists and matrices as well
+```{r}
+v <- c("a", "b", "c", "d")
+v
+v[1]
+v[-2] # All elements apart from 2nd
+v[2:4]
+```
+So far I've used [] operator with **numeric** indices. Indices can also be **logical**:
+```{r}
+v[v > "a"]
+v > "b"
+v[v>"b"]
+```
+What about matrices?
+```{r}
+m <- matrix(1:6, 2, 3)
+m
+
+e <- m[2, 3]
+e
+class(e)
+str(e)
+dim(e)
+length(e)
+```
+Single elements of a matrix retrieved by the [] operator are of type vector (of course with length 1). If you want a 1x1 matrix instead, set the *drop* argument to FALSE:
+```{r}
+m <- matrix(1:6, 2, 3)
+m
+
+e_vector <- m[2, 3]
+e_vector
+str(e_vector)
+length(e_vector)
+
+e_matrix <- m[1, 2, drop=FALSE]
+e_matrix
+length(e_matrix)
+str(e_matrix)
+dim(e_matrix)
+length(e_matrix)
+
+```
+Same option if you want to get a single row or a single column as a matrix instead of getting it as a vector:
+```{r}
+m <- matrix(1:6, 2, 3)
+m
+
+r_vector <- m[2, ]
+r_vector
+str(r_vector)
+length(r_vector)
+
+r_matrix <- m[2, , drop=FALSE]
+r_matrix
+str(r_matrix)
+length(r_matrix)
+```
+Matrices can be accessed column- or row-wise as well:
+```{r}
+r <- m[1, ] # 1st row
+r
+class(r)
+str(r)
+
+c <- m[, 2] # 2nd column, returned as a vector, i.e. kind of a "row"
+c
+class(c)
+str(c)
+
+```
+
+In order to subset a list, you can use the [] operator.
+```{r}
+l <- list(1:4, 0.6)
+l
+```
+Ok, maybe it's better with names:
+```{r}
+l <- list( foo=1:4, bar=0.6)
+l
+l[1]
+
+```
+l[1] uses [] operator to access list elements and returns an object that is of the same type of the object it is applied to, i.e. a *list*:
+```{r}
+l[1]
+str(l[1])
+class(l[1])
+
+```
+To subset a list obtainig a vector, use the [[]] operator:
+```{r}
+l[[1]]
+str(l[[1]])
+class(l[[1]])
+
+```
+With the [[]] and [] operator you can use strings, namely the names of elements of the list:
+```{r}
+l[["bar"]]
+
+l["bar"]
+```
+In the first case [[ ]] you get a vector, in the second case [] you get a list.
+
+The $ sign can only be used to access elements of a list or data frame by name of the element. This is useful since this way you do not have to remebers if the foo namesd element was in first, second, ... position inside the list. Just call by the name, she will answer.
+```{r}
+l$foo
+
+l$bar
+```
+As I said the [[]] operator supports *computed* indices, as apposed to $:
+```{r}
+name = "foo"
+l[[name]] # whether you want a vector...
+l[name]   # ... or a list
+```
+[[]] operator can be used to access elements of a list recursively. Suppose you have:
+```{r}
+l <- list(a=list(10, 12, 14), b=c(3.14, 6.28))
+l
+
+l[1]
+class(l[1])
+
+l[[1]]
+class(l[[1]])
+
+l[[1]][[3]] # l[[1]] returns a list, accessed by [[3]] and this returna a vector
+
+l[[1]][3]   # l[[1]] returns a list, accessed by [3] and this returna a list
+
+l[[c(1, 1)]]
+
+l[[2]]
+class(l[[2]])
+
+l[[2]][1]
+
+l[[1]][2]
+```
+
+Partial matching:
+```{r}
+l <- list(ab=1:5)
+l
+l$ab
+
+l["ab"]     # return element named ab as a list
+l[["ab"]]   # return element named ab as a vector
+
+l[["a"]]    # no match with l's names. Got NULL
+
+l[["a", exact=FALSE]]  # got the columns
+
+```
+Anyway, partial matching is *default* for the $ operator:
+```{r}
+l$ab
+
+l$a
+
+l$b
+```
+So partial matching works forwhen there's a match for the first letters of list element's nam.
+
+### Removing NAs
+```{r}
+x <- c(1, 2, NA, NA, 3)
+bad <- is.na(x)
+bad
+x[!bad]
+
+```
+When you have multiple variables and want to get only the observations that are good to to go for ANY variable, you can use the complete.cases() function.
+```{r}
+x1 <- c(1, 2, NA, 3, 4)
+x2 <- c("yes", NA, "no", NA, "yes")
+
+length(x1)==length(x2)
+
+good <- complete.cases(x1, x2)
+good
+x1[good]
+x2[good]
+```
+
+### Reading and Writing Data
+
+```{r}
+y <- data.frame(a=1, b="a")
+y
+dput(y)
+dput(y, file="y.R")
+
+rm(y)
+y <- dget("y.R")
+y
+
+```
+
+```{r}
+x <- 1:10
+dump(c("x", "y"), file="data.R")
+
+rm(x, y)
+source("data.R")
+x
+y
+```
+
+
+### Data for Week 1
+
+# Reading from a zip file w/o extracting it
+connection <- unz("C:/Nuova cartella/R Programming/rprog-data-quiz1_data.zip", "hw1_data.csv")
+str(connection)
+rm(x)
+x <- read.csv(connection) # reads as a vector os character vectors
+
+rm(x)
+connection = file("C:/Nuova cartella/R Programming/hw1_data.csv")
+x <- read.csv(connection)
+str(x)
+head(x)
+tail(x)
+x[47, ]
+ozone <- x$Ozone
+ozone
+bad <- is.na(ozone)
+bad
+sum(bad)
+ozone_notbad <- ozone[!bad]
+mean(ozone_notbad)
+
+subset_Solar.R <- x[x$Ozone>31 & x$Temp>90, ]$Solar.R
+subset_Solar.R
+bad_subset_Solar.R = is.na(subset_Solar.R)
+subset_Solar.R_notbad = subset_Solar.R[!bad_subset_Solar.R]
+subset_Solar.R_notbad
+mean(subset_Solar.R_notbad)
+
+temp_montheq6 <- x[x$Month==6, ]$Temp
+temp_montheq6
+mean(temp_montheq6)
+
+ozone_montheq5 <- x[x$Month==5, ]$Ozone
+ozone_montheq5
+bad_ozone_montheq5 = is.na(ozone_montheq5)
+ozone_montheq5_notbad = ozone_montheq5[!bad_ozone_montheq5]
+ozone_montheq5_notbad
+max(ozone_montheq5_notbad)
+
+x <- 1:4
+y <- 2:3
+str(x+y)
+x <- 4
+class(x)
+
+x <- c(4, "a", TRUE)
+class(x)
